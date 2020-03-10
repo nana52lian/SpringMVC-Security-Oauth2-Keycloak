@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xmlns:util="http://www.springframework.org/schema/util"
+ xmlns:aop="http://www.springframework.org/schema/aop"
+ xmlns:sec="http://www.springframework.org/schema/security"
+ xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/util
+           http://www.springframework.org/schema/util/spring-util.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security.xsd">
+
+
+<!-- JSPタグでSpringSecurity式を使用したい場合に以下を定義する
+　　　※js,cssが配置されているパスは適用外にする。-->
+<bean id="webexpressionHandler" 
+   class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler"/>
+<sec:http pattern="/resources/**" security="none"/>
+
+  <sec:http auto-config="false" use-expressions="true" entry-point-ref="loginUrlAuthenticationEntryPoint">
+    <sec:intercept-url pattern="/login" access="permitAll"/>　　<!-- ※ログイン画面は全員アクセスできる。 -->
+    <sec:intercept-url pattern="/logout" access="permitAll"/>　<!-- ※ログアウト画面も全員アクセスできる。 -->
+    <sec:intercept-url pattern="/**" access="hasRole('USER')" />　<!-- ※他の画面はUSERロールをもっていないとアクセスできない。 -->
+
+    <sec:custom-filter position="FORM_LOGIN_FILTER" ref="applicationUsernamePasswordAuthenticationFilter" />　<!-- ※ログインフォーム向けにある既存の認証処理を独自認証処理に置き換える。 -->
+    
+    <sec:logout logout-url="/logout" logout-success-url="/view/login?from=logout" invalidate-session="true" />　<!-- ※ログアウトに関する設定。 -->
+    
+    <sec:csrf/>　<!-- ※POST時にCSRFの検証も行う。処理自体は自動で行われる。 -->
+  </sec:http>
+
+  <bean id="loginUrlAuthenticationEntryPoint" class="org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint">
+    <constructor-arg value="/login" />　　<!-- ※ログイン画面の指定。認証なしでアクセスするとここに飛ばされる。 -->
+  </bean>
+
+  <bean id="applicationUsernamePasswordAuthenticationFilter" class="jp.co.example.filter.ApplicationUsernamePasswordAuthenticationFilter">
+    <property name="authenticationManager" ref="authenticationManager" />
+    <property name="authenticationSuccessHandler" ref="authenticationSuccessHandler" />　<!-- ※認証成功したあとに処理するハンドラーの指定。 -->
+    <property name="authenticationFailureHandler" ref="authenticationFailureHandler" />　<!-- ※認証失敗したあとに処理するハンドラーの指定。 -->
+    <property name="filterProcessesUrl" value="/authentication" />　　<!-- ※認証を行うパス。ここに認証情報をつけてPOSTすると認証処理（filter）が実行される。 -->
+  </bean>
+
+  <bean id="authenticationSuccessHandler" class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
+    <property name="defaultTargetUrl" value="/home"/>　<!-- ※認証成功した後の遷移先。↑ハンドラー自体は既存のものを利用。 -->
+  </bean>
+
+  <bean id="authenticationFailureHandler" class="org.springframework.security.web.authentication.ExceptionMappingAuthenticationFailureHandler">
+    <property name="defaultFailureUrl" value="/login?error=true"/>　<!-- ※認証失敗した後の遷移先。↑ハンドラー自体は既存のものを利用。 -->
+  </bean>
+
+  <sec:authentication-manager alias="authenticationManager">
+    <sec:authentication-provider ref="applicationUsernamePasswordAuthenticationProvider" />　<!-- ※認証されたユーザの情報を提供するプロバイダの指定。 -->
+  </sec:authentication-manager>
+
+  <bean id="applicationUsernamePasswordAuthenticationProvider" class="jp.co.example.auth.ApplicationUsernamePasswordAuthenticationProvider">
+  </bean>　<!-- ※認証通過時、認証ユーザの提供するプロバイダ。内容は後述。 -->
+   
+</beans>

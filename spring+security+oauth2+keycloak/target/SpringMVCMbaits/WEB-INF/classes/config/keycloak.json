@@ -1,0 +1,12 @@
+{
+  "realm": "spring-security-oauth2",
+  "auth-server-url": "http://localhost:8080/auth/",
+  "ssl-required": "none",
+  "resource": "spring-security-oauth2",
+  "verify-token-audience": true,
+  "credentials": {
+    "secret": "35193fa0-0788-4092-8ec2-5c6d679c0c9f"
+  },
+  "confidential-port": 0,
+  "policy-enforcer": {}
+}

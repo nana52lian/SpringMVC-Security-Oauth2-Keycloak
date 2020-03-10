@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:mvc="http://www.springframework.org/schema/mvc" 
+    xmlns:sec="http://www.springframework.org/schema/security"
+    xmlns:oauth="http://www.springframework.org/schema/security/oauth2" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+    	http://www.springframework.org/schema/security/oauth2 http://www.springframework.org/schema/security/spring-security-oauth2.xsd">
+
+	<!-- 注解扫描包 -->
+	<context:component-scan base-package="com.tgb" />
+
+	<!-- 开启注解 -->
+	<mvc:annotation-driven />
+
+	<!--
+		配置静态资源，直接映射到对应的文件夹，不被DispatcherServlet处理，3.04新增功能，需要重新设置spring-mvc-3.0.xsd
+	-->
+	<mvc:resources mapping="/img/**" location="/img/" />
+	<mvc:resources mapping="/js/**" location="/js/" />
+	<mvc:resources mapping="/css/**" location="/css/" />
+	<mvc:resources mapping="/html/**" location="/html/" />
+
+
+
+	<!-- 定义跳转的文件的前后缀 ，视图模式配置-->
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!-- 这里的配置我的理解是自动给后面action的方法return的字符串加上前缀和后缀，变成一个 可用的url地址 -->
+		<property name="prefix" value="/WEB-INF/jsp/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+    <!-- アノテーションによる定義を有効にする -->
+    <mvc:annotation-driven />
+    <!-- OAuth2クライアントとしてのコンテキストフィルター定義 -->
+    <oauth:client id="oauth2ClientContextFilter" />
+    <!--リソース認可の設定 -->
+    <oauth:resource id="sampleResource" type="authorization_code" client-id="spring-security-oauth2" client-secret="f2bd0955-ad44-4973-a1f9-d3bf08e13235"
+        access-token-uri="${accessTokenUri}" user-authorization-uri="${userAuthorizationUri}" />
+    <!-- Spring Security HTTPセキュリティ設定 -->
+    <sec:http>
+<!--         <sec:intercept-url pattern="/userinfo**" access="ROLE_USER" /> -->
+        <sec:intercept-url pattern="/**" access="hasRole('ROLE_USER')" />
+
+        <sec:form-login default-target-url="/index" />
+        <sec:logout logout-success-url="${END_SESSION_ENDPOINT}" logout-url="/logout"  invalidate-session="true" />
+        <!-- OAuth2クライアントコンテキストフィルターを追加します -->
+        <sec:custom-filter ref="oauth2ClientContextFilter" after="EXCEPTION_TRANSLATION_FILTER" />
+    </sec:http>
+    <!-- Spring Security認証情報 -->
+    <sec:authentication-manager>
+        <sec:authentication-provider>
+            <sec:user-service>
+                <sec:user name="user" password="user" authorities="ROLE_USER" />
+            </sec:user-service>
+        </sec:authentication-provider>
+    </sec:authentication-manager>
+    <!-- パッケージ名を定義。ここではexampleとした -->
+    <context:component-scan base-package="example" />
+    <!-- プロパティファイルの読み込み -->
+    <context:property-placeholder location="classpath:config/oauth2.properties" />
+    <mvc:default-servlet-handler />
+    <bean id="sampleController" class="com.tgb.controller.SampleController">
+        <property name="restTemplate">
+            <oauth:rest-template resource="sampleResource" />
+        </property>
+    </bean>
+
+</beans>
