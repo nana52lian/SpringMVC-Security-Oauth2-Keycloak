@@ -10,7 +10,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<spring.version>4.3.13.RELEASE</spring.version>          
 		<java.version>1.8</java.version>
-		<mysql.connector.version>5.1.43</mysql.connector.version>
+		<mysql.connector.version>8.0.28</mysql.connector.version>
 		<mybatis.version>3.4.4</mybatis.version>
 		<KEYCLOAK_VERSION>9.0.0</KEYCLOAK_VERSION>
 		<security>4.2.3.RELEASE</security>
